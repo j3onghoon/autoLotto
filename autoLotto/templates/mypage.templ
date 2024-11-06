@@ -1,0 +1,148 @@
+package templates
+
+import (
+    "autoLotto/pkg"
+    "strconv"
+)
+
+templ MyPage(lotteryUser pkg.LotteryUser, ticketCountList []string) {
+    @Layout() {
+        <div class="flex flex-col items-center min-h-screen bg-gray-100 p-4 w-full">
+            <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg border border-gray-200 relative">
+
+                <!-- 로그아웃 버튼 (1시 방향, 작게) -->
+                <button
+                    id="logout"
+                    class="absolute top-4 right-4 bg-red-500 text-white text-xs py-1 px-3 rounded-full hover:bg-red-600 transition"
+                    onclick="window.location.href='/logout'"
+                >
+                    로그아웃
+                </button>
+
+                <!-- 예치금 정보 표시 (중앙 배치) -->
+                <div class="mb-8 text-center">
+                    <p class="text-gray-500 text-lg">예치금</p>
+                    <p id="deposit" class="text-3xl font-semibold text-green-500 mt-2">₩{ pkg.FormatWithCommas(lotteryUser.Deposit) }</p>
+                </div>
+
+                <!-- 예치금 충전하러 가기 버튼 (파란색, 중앙 배치) -->
+                <div class="flex justify-center mb-8">
+                    <button
+                        id="chargeButton"
+                        class="bg-blue-500 text-white text-sm py-2 px-4 rounded-md hover:bg-blue-600 transition"
+                        onclick="window.location.href='https://www.dhlottery.co.kr/payment.do?method=payment'"
+                    >
+                        예치금 충전하러 가기
+                    </button>
+                </div>
+
+                <!-- 자동구매 체크박스 -->
+                <div class="mb-6 flex items-center justify-between">
+                    <label for="weeklyPurchase" class="text-gray-700 text-base font-medium">자동구매 활성화</label>
+                    <input
+                    if lotteryUser.User.WeeklyPurchase {
+                    checked
+                    } type="checkbox" id="weeklyPurchase" class="w-6 h-6 border-gray-300 rounded focus:ring-green-500 cursor-pointer transition">
+                </div>
+
+                <!-- 구매 장수 선택 -->
+                <div class="mb-6 flex items-center justify-between">
+                    <label for="ticketCount" class="text-gray-700 text-base font-medium">구매 장수</label>
+                    <select id="ticketCount" class="border border-gray-300 rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                        for _, ticket_count := range ticketCountList {
+                            <option value={ ticket_count } if strconv.Itoa(lotteryUser.User.TicketCount) == ticket_count { selected }>{ ticket_count }매</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <button id="saveButton" class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition mb-4">저장</button>
+
+                <!-- 탈퇴 버튼 (가운데 정렬) -->
+                <div class="flex justify-center mt-6">
+                    <button id="deleteAccount" class="bg-gray-400 text-white py-3 px-8 rounded-lg hover:bg-gray-500 transition font-semibold">탈퇴</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // 자동구매 저장 버튼 클릭 시 상태 변경 알림 표시 및 서버로 요청 보내기
+            document.getElementById("saveButton").onclick = async function() {
+                const isWeeklyPurchaseEnabled = document.getElementById("weeklyPurchase").checked;
+                const ticketCount = document.getElementById("ticketCount").value;
+                const responseMessage = isWeeklyPurchaseEnabled ? `${ticketCount}매 자동구매가 활성화되었습니다.` : "자동구매가 비활성화되었습니다.";
+
+                // 알림 메시지 표시
+                alert(responseMessage);
+
+                // 서버로 상태 저장 요청
+                try {
+                    const response = await fetch("/mypage", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            weekly_purchase: isWeeklyPurchaseEnabled,
+                            ticket_count: parseInt(ticketCount)
+                        })
+                    });
+
+                    if (!response.ok) throw new Error("Failed to save the WeeklyPurchase status");
+
+                    console.log("WeeklyPurchase status saved successfully:", responseMessage);
+                } catch (error) {
+                    console.error("Error saving WeeklyPurchase status:", error);
+                    alert("자동구매 상태 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+                }
+            };
+
+            // 로그아웃 버튼 클릭 시 로그아웃 요청 보내기
+            document.getElementById("logout").onclick = async function() {
+                try {
+                    const response = await fetch("/logout", {
+                        method: "POST", // POST 요청으로 로그아웃 수행
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert("로그아웃되었습니다. 자동구매는 설정에 따라 유지됩니다.");
+                        window.location.href = "/"
+                    } else {
+                        throw new Error("Failed to log out");
+                    }
+                } catch (error) {
+                    console.error("Error logging out:", error);
+                    alert("로그아웃 중 오류가 발생했습니다. 다시 시도해주세요.");
+                }
+            }
+
+            // 탈퇴 버튼 클릭 시 탈퇴 요청 보내기
+            document.getElementById("deleteAccount").onclick = async function() {
+                const confirmation = confirm("탈퇴하면 자동구매가 되지 않습니다. 정말로 탈퇴하시겠습니까?");
+                if (!confirmation) return;
+
+                try {
+                    const response = await fetch("/delete_account", {
+                        method: "POST", // POST 요청으로 탈퇴 수행
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert("탈퇴가 완료되었습니다.");
+                        window.location.href = "/"; // 탈퇴 후 메인 페이지로 리디렉션
+                    } else {
+                        throw new Error("Failed to delete account");
+                    }
+                } catch (error) {
+                    console.error("Error deleting account:", error);
+                    alert("탈퇴 중 오류가 발생했습니다. 다시 시도해주세요.");
+                }
+            };
+        </script>
+    }
+}

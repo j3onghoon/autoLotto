@@ -1,0 +1,43 @@
+package templates
+
+templ Layout() {
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyPage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen">
+    { children... }
+</body>
+<script>
+    async function common_submit(event, button_name, target_url) {
+        event.preventDefault();  // 기본 폼 제출 중단
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const button = document.getElementById(button_name);
+        const spinner = button.querySelector(".spinner");
+
+        // 버튼 비활성화 및 스피너 표시
+        button.disabled = true;
+        spinner.classList.remove("hidden");
+        try {
+            const response = await fetch(target_url, {
+                method: "POST",
+                body: formData
+            });
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Network error. Please try again.");
+        } finally {
+            // 요청이 완료되면 버튼 활성화 및 스피너 숨김
+            button.disabled = false;
+            spinner.classList.add("hidden");
+        }
+    }
+</script>
+</html>
+}

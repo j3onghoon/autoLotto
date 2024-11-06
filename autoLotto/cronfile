@@ -1,0 +1,3 @@
+# m h d m w (UTC) UTC 15:00 == KST 00:00
+# 6: 요일 중 토요일 (0 = 일요일, 1 = 월요일, 2 = 화요일, 3 = 수요일, 4 = 목요일, 5 = 금요일, 6 = 토요일)
+20 7 * * 3 /app/purchase_lotto >> /var/log/cron_purchase_lotto.log 2>&1
