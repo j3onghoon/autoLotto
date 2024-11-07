@@ -1,0 +1,31 @@
+# 빌드된 실행 파일
+main
+web
+purchase_lotto
+
+# Go 빌드 아티팩트
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go 모듈 캐시 및 종속성
+/vendor/
+go.sum
+
+# 디렉토리 내 모든 빌드 파일
+bin/
+build/
+tmp/
+
+# 임시 파일
+*.tmp
+*.out
+*.log
+
+# IDE 및 편집기 파일
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
